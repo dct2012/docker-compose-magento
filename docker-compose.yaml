@@ -1,0 +1,50 @@
+version: "3.7"
+services:
+
+  magento:
+    build:
+      context: ./_php
+    image: magento-app
+    container_name: magento-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./_magento:/var/www/html
+    networks:
+      - magento-bridge
+
+  db:
+    image: percona:latest
+    container_name: magento-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: docker
+      MYSQL_ROOT_PASSWORD: docker
+      MYSQL_PASSWORD: docker
+      MYSQL_USER: docker
+    ports:
+      - 3306:3306
+    volumes:
+      - ./_db:/docker-entrypoint-initdb.d
+      - magento-db-volume:/var/lib/mysql
+    networks:
+      - magento-bridge
+
+  nginx:
+    image: nginx:alpine
+    container_name: magento-nginx
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - ./_magento:/var/www/html
+      - ./_nginx:/etc/nginx/conf.d/
+    networks:
+      - magento-bridge
+
+networks:
+  magento-bridge:
+    driver: bridge
+
+volumes:
+  magento-db-volume:
